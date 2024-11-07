@@ -1,0 +1,46 @@
+// SPDX-License-Identifier: GPL-3.0
+
+pragma solidity >=0.7.0 <0.9.0;
+// Contract to manage student data
+contract StudentData {
+
+    // Structure for student details
+    struct Student {
+        int ID;
+        string fName;
+        string lName;
+        int[2] marks;
+    }
+
+    address public owner;
+    int public stdCount = 0;
+    mapping(int => Student) public stdRecords;
+
+    // Modifier to restrict access to the owner only
+    modifier onlyOwner {
+        require(owner == msg.sender, "Only the owner can perform this action");
+        _;
+    }
+
+    // Constructor sets the contract deployer as the owner
+    constructor() {
+        owner = msg.sender;
+    }
+
+    // Function to add new student records, accessible only by the owner
+    function addNewRecord(int _ID, string memory _fName, string memory _lName, int[2] memory _marks) public onlyOwner {
+        stdCount += 1;
+        stdRecords[stdCount] = Student(_ID, _fName, _lName, _marks);
+    }
+}
+
+
+
+
+
+
+inputs :-
+
+1, "Atharva", "Wankar", [80, 90]
+2, "Yashashree", "Mahajan", [93, 74]
+3, "Inspector", "Talpade", [69,69]
