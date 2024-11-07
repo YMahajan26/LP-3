@@ -1,64 +1,55 @@
 import random
 import time
 
-# Partition function for quicksort
-def partition(l, r, a):
-    pivot = a[r]
-    i = l - 1
-    for j in range(l, r):
-        if a[j] <= pivot:
-            i += 1
-            a[i], a[j] = a[j], a[i]
-    a[i + 1], a[r] = a[r], a[i + 1]
-    return i + 1
-
-# Randomized partition function
-def randomized_partition(l, r, a):
-    random_index = random.randint(l, r)
-    a[r], a[random_index] = a[random_index], a[r]  # Swap random pivot to the end
-    return partition(l, r, a)
-
-# QuickSort with deterministic partitioning
-def quicksort(l, r, a):
-    if l < r:
-        pi = partition(l, r, a)
-        quicksort(l, pi - 1, a)
-        quicksort(pi + 1, r, a)
-
-# Randomized QuickSort using randomized partition
-def randomized_quicksort(l, r, a):
-    if l < r:
-        pi = randomized_partition(l, r, a)
-        randomized_quicksort(l, pi - 1, a)
-        randomized_quicksort(pi + 1, r, a)
-
-if __name__ == "__main__":
-    n = int(input("Enter the number of elements: "))
-    arr = [random.randint(1, 1000) for _ in range(n)]
+# Partition function counts comparisons
+def partition(arr, low, high):
+    pivot = arr[high]
+    i = low - 1
+    comparisons = 0
     
-    # Display the unsorted array
-    print("Unsorted array:", arr[:10])
+    for j in range(low, high):
+        comparisons += 1
+        if arr[j] <= pivot:
+            i += 1
+            arr[i], arr[j] = arr[j], arr[i]
+    
+    arr[i + 1], arr[high] = arr[high], arr[i + 1]
+    return i + 1, comparisons
 
-    # Analyze deterministic QuickSort
-    arr_copy = arr.copy()
+# Quick Sort - Deterministic (pivot is the last element)
+def quick_sort(arr, low, high, is_randomized=False):
+    if low < high:
+        if is_randomized:
+            pivot_index = random.randint(low, high)
+            arr[high], arr[pivot_index] = arr[pivot_index], arr[high]
+        pi, comparisons = partition(arr, low, high)
+        comparisons += quick_sort(arr, low, pi - 1, is_randomized)
+        comparisons += quick_sort(arr, pi + 1, high, is_randomized)
+        return comparisons
+    return 0
+
+# Fixed input array of size 15
+arr = [1, 5, 2, 3, 4, 6, 11, 12, 13, 14, 15]
+
+# Function to analyze both deterministic and randomized quicksort
+def analyze_quick_sort(arr):
+    # Copy of the original array for deterministic quicksort
+    arr_deterministic = arr[:]
     start_time = time.perf_counter()
-    quicksort(0, n - 1, arr_copy)
-    end_time = time.perf_counter()
-    deterministic_time = end_time - start_time
-    print(f"\nSorted array(Deterministic): {arr_copy}")
-    print(f"Deterministic QuickSort took {deterministic_time:.6f} seconds")
+    comparisons_deterministic = quick_sort(arr_deterministic, 0, len(arr_deterministic) - 1)
+    time_deterministic = time.perf_counter() - start_time
+    
+    # Copy of the original array for randomized quicksort
+    arr_randomized = arr[:]
+    start_time = time.perf_counter()
+    comparisons_randomized = quick_sort(arr_randomized, 0, len(arr_randomized) - 1, is_randomized=True)
+    time_randomized = time.perf_counter() - start_time
+    
+    # Output results
+    print(f"Array: {arr}")
+    print(f"Deterministic Quick Sort - Comparisons: {comparisons_deterministic}, Time: {time_deterministic:.6f} seconds")
+    print(f"Randomized Quick Sort - Comparisons: {comparisons_randomized}, Time: {time_randomized:.6f} seconds")
 
-    # Analyze randomized QuickSort
-    arr_copy = arr.copy()
-    start_time2 = time.perf_counter()
-    randomized_quicksort(0, n - 1, arr_copy)
-    end_time2 = time.perf_counter()
-    randomized_time = end_time2 - start_time2
-    print(f"\nSorted array(Randomized): {arr_copy}")
-    print(f"Randomized QuickSort took {randomized_time:.6f} seconds\n")
+# Analyze the fixed array
+analyze_quick_sort(arr)
 
-    # Handling cases with very small durations
-    if deterministic_time < 1e-6:
-        print("Time for deterministic QuickSort was too small to measure accurately.")
-    if randomized_time < 1e-6:
-        print("Time for randomized QuickSort was too small to measure accurately.")

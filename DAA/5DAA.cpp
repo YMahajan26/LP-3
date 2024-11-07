@@ -1,88 +1,79 @@
 #include <iostream>
 #include <vector>
-#include <cstdlib>  // For rand()
-#include <chrono>   // For time measurement
+#include <cstdlib>
+#include <ctime>
 
-using namespace std;
+// Partition function to count comparisons
+int partition(std::vector<int>& arr, int low, int high, int& comparisons) {
+    int pivot = arr[high];  // pivot is chosen to be the last element
+    int i = low - 1;
 
-// Standard partition function
-int partition(vector<int>& arr, int l, int r) {
-    int pivot = arr[r];
-    int i = l - 1;
-    for (int j = l; j < r; j++) {
+    for (int j = low; j < high; ++j) {
+        comparisons++;
         if (arr[j] <= pivot) {
-            swap(arr[++i], arr[j]);
+            i++;
+            std::swap(arr[i], arr[j]);
         }
     }
-    swap(arr[i + 1], arr[r]);
+
+    // Place the pivot in the correct position
+    std::swap(arr[i + 1], arr[high]);
     return i + 1;
 }
 
-// Randomized partition function
-int randomizedPartition(vector<int>& arr, int l, int r) {
-    int randomIndex = l + rand() % (r - l + 1);
-    swap(arr[r], arr[randomIndex]);
-    return partition(arr, l, r);
+// Quick Sort - Deterministic (pivot is the last element)
+int quickSort(std::vector<int>& arr, int low, int high, bool isRandomized, int& comparisons) {
+    if (low < high) {
+        if (isRandomized) {
+            // Randomize pivot
+            int pivotIndex = rand() % (high - low + 1) + low;
+            std::swap(arr[high], arr[pivotIndex]);
+        }
+        
+        int pi = partition(arr, low, high, comparisons);
+        
+        quickSort(arr, low, pi - 1, isRandomized, comparisons);
+        quickSort(arr, pi + 1, high, isRandomized, comparisons);
+    }
+    return 0;
 }
 
-// Deterministic QuickSort
-void quicksort(vector<int>& arr, int l, int r) {
-    if (l < r) {
-        int pi = partition(arr, l, r);
-        quicksort(arr, l, pi - 1);
-        quicksort(arr, pi + 1, r);
-    }
-}
+// Function to analyze both deterministic and randomized quicksort
+void analyzeQuickSort(std::vector<int>& arr) {
+    // Copy the original array for deterministic quicksort
+    std::vector<int> arr_deterministic = arr;
+    int comparisons_deterministic = 0;
+    clock_t start_time = clock();
+    quickSort(arr_deterministic, 0, arr_deterministic.size() - 1, false, comparisons_deterministic);
+    double time_deterministic = (double)(clock() - start_time) / CLOCKS_PER_SEC;
 
-// Randomized QuickSort
-void randomizedQuicksort(vector<int>& arr, int l, int r) {
-    if (l < r) {
-        int pi = randomizedPartition(arr, l, r);
-        randomizedQuicksort(arr, l, pi - 1);
-        randomizedQuicksort(arr, pi + 1, r);
+    // Copy the original array for randomized quicksort
+    std::vector<int> arr_randomized = arr;
+    int comparisons_randomized = 0;
+    start_time = clock();
+    quickSort(arr_randomized, 0, arr_randomized.size() - 1, true, comparisons_randomized);
+    double time_randomized = (double)(clock() - start_time) / CLOCKS_PER_SEC;
+
+    // Output results
+    std::cout << "Array: ";
+    for (int num : arr) {
+        std::cout << num << " ";
     }
+    std::cout << "\n";
+
+    std::cout << "Deterministic Quick Sort - Comparisons: " << comparisons_deterministic
+              << ", Time: " << time_deterministic << " seconds\n";
+
+    std::cout << "Randomized Quick Sort - Comparisons: " << comparisons_randomized
+              << ", Time: " << time_randomized << " seconds\n";
 }
 
 int main() {
-    int n;
-    cout << "Enter the number of elements: ";
-    cin >> n;
+    // Fixed input array of size 15
+    std::vector<int> arr = {1, 5, 2, 3, 4, 6, 11, 12, 13, 14, 15};
 
-    // Generate random array
-    vector<int> arr(n);
-    for (int &num : arr) {
-        num = rand() % 1000 + 1;
-    }
-
-    cout << "\nUnSorted array: ";
-    for (int i = 0; i < min(n, 10); i++) {
-        cout << arr[i] << " ";
-    }
-    cout << endl;
-
-    // Measure Deterministic QuickSort
-    auto arrCopy = arr;
-    auto start = chrono::high_resolution_clock::now();
-    quicksort(arrCopy, 0, n - 1);
-    auto end = chrono::high_resolution_clock::now();
-    auto deterministicTime = chrono::duration<double>(end - start).count();
-    cout << "\nSorted array (Deterministic QuickSort): ";
-    for (int i = 0; i < min(n, 10); i++) {
-        cout << arrCopy[i] << " ";
-    }
-    cout << "\nDeterministic QuickSort took " << deterministicTime << " seconds\n";
-
-    // Measure Randomized QuickSort
-    arrCopy = arr;
-    start = chrono::high_resolution_clock::now();
-    randomizedQuicksort(arrCopy, 0, n - 1);
-    end = chrono::high_resolution_clock::now();
-    auto randomizedTime = chrono::duration<double>(end - start).count();
-    cout << "\nSorted array (Randomized QuickSort): ";
-    for (int i = 0; i < min(n, 10); i++) {
-        cout << arrCopy[i] << " ";
-    }
-    cout << "\nRandomized QuickSort took " << randomizedTime << " seconds\n";
+    // Analyze the fixed array
+    analyzeQuickSort(arr);
 
     return 0;
 }
